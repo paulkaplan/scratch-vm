@@ -112,6 +112,13 @@ class Runtime extends EventEmitter {
         this._refreshTargets = false;
 
         /**
+         * Flag to emit a monitors update at the end of a step. When monitor data
+         * changes, this flag is set to true.
+         * @type {boolean}
+         */
+        this._refreshMonitors = false;
+
+        /**
          * List of all monitors.
          */
         this._monitorState = {};
@@ -699,10 +706,13 @@ class Runtime extends EventEmitter {
             this._refreshTargets = false;
         }
 
-        // @todo(vm#570) only emit if monitors has changed since last time.
-        this.emit(Runtime.MONITORS_UPDATE,
-            Object.keys(this._monitorState).map(key => this._monitorState[key])
-        );
+        if (this._refreshMonitors) {
+            this.emit(Runtime.MONITORS_UPDATE,
+                Object.keys(this._monitorState).map(key => this._monitorState[key])
+            );
+            this._refreshMonitors = false;
+        }
+
     }
 
     /**
@@ -878,6 +888,7 @@ class Runtime extends EventEmitter {
      */
     requestAddMonitor (monitor) {
         this._monitorState[monitor.id] = monitor;
+        this._refreshMonitors = true;
     }
 
     /**
@@ -887,7 +898,16 @@ class Runtime extends EventEmitter {
      */
     requestUpdateMonitor (monitor) {
         if (this._monitorState.hasOwnProperty(monitor.id)) {
-            this._monitorState[monitor.id] = Object.assign({}, this._monitorState[monitor.id], monitor);
+            let dirty = false;
+            for (const key in monitor) {
+                if (monitor[key] !== this._monitorState[monitor.id][key]) {
+                    dirty = true;
+                }
+            }
+            if (dirty) {
+                this._monitorState[monitor.id] = Object.assign({}, this._monitorState[monitor.id], monitor);
+                this._refreshMonitors = true;
+            }
         }
     }
 
@@ -898,6 +918,7 @@ class Runtime extends EventEmitter {
      */
     requestRemoveMonitor (monitorId) {
         delete this._monitorState[monitorId];
+        this._refreshMonitors = true;
     }
 
     /**
