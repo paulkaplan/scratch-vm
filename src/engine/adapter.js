@@ -1,6 +1,6 @@
 const mutationAdapter = require('./mutation-adapter');
 const html = require('htmlparser2');
-
+const uid = require('../util/uid');
 /**
  * Convert and an individual block DOM to the representation tree.
  * Based on Blockly's `domToBlockHeadless_`.
@@ -46,6 +46,14 @@ const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
             } else if (grandChildNodeName === 'shadow') {
                 childShadowNode = grandChildNode;
             }
+        }
+
+        // Rewrite shadow ID if there is a sibling block node.
+        // Blockly does not respect the IDs of obscured shadow blocks (but the VM does).
+        // Rewrite the ID to prevent problems with deleting and modifying by forcing
+        // obscured shadows to _always_ be a new block.
+        if (childBlockNode && childShadowNode) {
+            childShadowNode.attribs.id = uid();
         }
 
         // Use shadow block only if there's no real block node.
