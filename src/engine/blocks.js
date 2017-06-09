@@ -348,9 +348,10 @@ class Blocks {
                 this._blocks[e.newParent].next = e.id;
             } else {
                 // Moved to the new parent's input.
-                // Don't obscure the shadow block.
+                // Keep old shadow reference unless the block is a new shadow
                 let oldShadow = null;
-                if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
+                if (!this._blocks[e.id].shadow &&
+                    this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
                     oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
                 }
                 this._blocks[e.newParent].inputs[e.newInput] = {
