@@ -535,14 +535,16 @@ class VirtualMachine extends EventEmitter {
                     .map(runtimeTarget => runtimeTarget.sprite.name);
                 const oldName = sprite.name;
                 const newUnusedName = StringUtil.unusedName(newName, names);
-                sprite.name = newUnusedName;
-                const allTargets = this.runtime.targets;
-                for (let i = 0; i < allTargets.length; i++) {
-                    const currTarget = allTargets[i];
-                    currTarget.blocks.updateAssetName(oldName, newName, 'sprite');
+                if (newUnusedName !== oldName) {
+                    sprite.name = newUnusedName;
+                    const allTargets = this.runtime.targets;
+                    for (let i = 0; i < allTargets.length; i++) {
+                        const currTarget = allTargets[i];
+                        currTarget.blocks.updateAssetName(oldName, newName, 'sprite');
+                    }
+                    this.emitTargetsUpdate();
                 }
             }
-            this.emitTargetsUpdate();
         } else {
             throw new Error('No target with the provided id.');
         }
