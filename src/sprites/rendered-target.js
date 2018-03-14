@@ -210,7 +210,7 @@ class RenderedTarget extends Target {
             this.x = position[0];
             this.y = position[1];
 
-            this.renderer.updateDrawableProperties(this.drawableID, {
+            this.updateDrawableProperties( {
                 position: position
             });
             if (this.visible) {
@@ -259,7 +259,7 @@ class RenderedTarget extends Target {
         this.direction = MathUtil.wrapClamp(direction, -179, 180);
         if (this.renderer) {
             const renderedDirectionScale = this._getRenderedDirectionAndScale();
-            this.renderer.updateDrawableProperties(this.drawableID, {
+            this.updateDrawableProperties({
                 direction: renderedDirectionScale.direction,
                 scale: renderedDirectionScale.scale
             });
@@ -307,7 +307,7 @@ class RenderedTarget extends Target {
         }
         this.visible = !!visible;
         if (this.renderer) {
-            this.renderer.updateDrawableProperties(this.drawableID, {
+            this.updateDrawableProperties({
                 visible: this.visible
             });
             if (this.visible) {
@@ -338,7 +338,7 @@ class RenderedTarget extends Target {
             );
             this.size = MathUtil.clamp(size / 100, minScale, maxScale) * 100;
             const renderedDirectionScale = this._getRenderedDirectionAndScale();
-            this.renderer.updateDrawableProperties(this.drawableID, {
+            this.updateDrawableProperties({
                 direction: renderedDirectionScale.direction,
                 scale: renderedDirectionScale.scale
             });
@@ -360,7 +360,7 @@ class RenderedTarget extends Target {
         if (this.renderer) {
             const props = {};
             props[effectName] = this.effects[effectName];
-            this.renderer.updateDrawableProperties(this.drawableID, props);
+            this.updateDrawableProperties(props);
             if (this.visible) {
                 this.runtime.requestRedraw();
             }
@@ -376,7 +376,7 @@ class RenderedTarget extends Target {
             this.effects[effectName] = 0;
         }
         if (this.renderer) {
-            this.renderer.updateDrawableProperties(this.drawableID, this.effects);
+            this.updateDrawableProperties(this.effects);
             if (this.visible) {
                 this.runtime.requestRedraw();
             }
@@ -409,7 +409,7 @@ class RenderedTarget extends Target {
                     costume.rotationCenterY / scale
                 ];
             }
-            this.renderer.updateDrawableProperties(this.drawableID, drawableProperties);
+            this.updateDrawableProperties(drawableProperties);
             if (this.visible) {
                 this.runtime.requestRedraw();
             }
@@ -533,7 +533,7 @@ class RenderedTarget extends Target {
         }
         if (this.renderer) {
             const renderedDirectionScale = this._getRenderedDirectionAndScale();
-            this.renderer.updateDrawableProperties(this.drawableID, {
+            this.updateDrawableProperties({
                 direction: renderedDirectionScale.direction,
                 scale: renderedDirectionScale.scale
             });
@@ -583,6 +583,25 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Update drawable properties for this rendered target.
+     * Use this instead of renderer directly so that the drag shadow can be updated.
+     * The dragging drawable will always override props to remain offset and transparent gray.
+     * @param {object} props object of properties to set on the drawable.
+     */
+    updateDrawableProperties (props) {
+        if (this.renderer) {
+            this.renderer.updateDrawableProperties(this.drawableID, props);
+
+            if (this.draggingDrawableID) {
+                props.position = [this.x + 6, this.y - 6]
+                props.brightness = -100;
+                props.ghost = 65
+                this.renderer.updateDrawableProperties(this.draggingDrawableID, props);
+            }
+        }
+    }
+
+    /**
      * Update all drawable properties for this rendered target.
      * Use when a batch has changed, e.g., when the drawable is first created.
      */
@@ -608,7 +627,7 @@ class RenderedTarget extends Target {
                 if (!this.effects.hasOwnProperty(effectName)) continue;
                 props[effectName] = this.effects[effectName];
             }
-            this.renderer.updateDrawableProperties(this.drawableID, props);
+            this.updateDrawableProperties(props);
             if (this.visible) {
                 this.runtime.requestRedraw();
             }
@@ -942,6 +961,27 @@ class RenderedTarget extends Target {
      */
     startDrag () {
         this.dragging = true;
+        if (this.renderer) {
+            this.draggingDrawableID = this.renderer.createDrawable();
+            const costume = this.sprite.costumes[this.currentCostume];
+            const drawableProperties = {
+                skinId: costume.skinId,
+                costumeResolution: costume.bitmapResolution
+            };
+            if (
+                typeof costume.rotationCenterX !== 'undefined' &&
+                typeof costume.rotationCenterY !== 'undefined'
+            ) {
+                const scale = costume.bitmapResolution || 1;
+                drawableProperties.rotationCenter = [
+                    costume.rotationCenterX / scale,
+                    costume.rotationCenterY / scale
+                ];
+            }
+            this.updateDrawableProperties(drawableProperties);
+            this.renderer.setDrawableOrder(this.draggingDrawableID, -1, true, 1);
+            this.runtime.requestRedraw();
+        }
     }
 
     /**
@@ -949,6 +989,11 @@ class RenderedTarget extends Target {
      */
     stopDrag () {
         this.dragging = false;
+        if (this.renderer && this.draggingDrawableID) {
+            this.renderer.destroyDrawable(this.draggingDrawableID);
+            this.draggingDrawableID = null;
+            this.runtime.requestRedraw();
+        }
     }
 
 
