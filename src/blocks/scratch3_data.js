@@ -81,7 +81,9 @@ class Scratch3DataBlocks {
     addToList (args, util) {
         const list = util.target.lookupOrCreateList(
             args.LIST.id, args.LIST.name);
-        if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) list.value.push(args.ITEM);
+        if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) {
+            list.value = list.value.concat([args.ITEM]);
+        }
     }
 
     deleteOfList (args, util) {
@@ -94,7 +96,7 @@ class Scratch3DataBlocks {
             list.value = [];
             return;
         }
-        list.value.splice(index - 1, 1);
+        list.value = list.value.slice(0, index - 1).concat(list.value.slice(index));
     }
 
     insertAtList (args, util) {
@@ -107,11 +109,11 @@ class Scratch3DataBlocks {
         }
         const listLimit = Scratch3DataBlocks.LIST_ITEM_LIMIT;
         if (index > listLimit) return;
-        list.value.splice(index - 1, 0, item);
+        list.value = list.value.slice(0, index - 1).concat([item].concat(list.value.slice(index - 1)));
         if (list.value.length > listLimit) {
             // If inserting caused the list to grow larger than the limit,
             // remove the last element in the list
-            list.value.pop();
+            list.value = list.value.slice(0, listLimit);
         }
     }
 
@@ -123,7 +125,7 @@ class Scratch3DataBlocks {
         if (index === Cast.LIST_INVALID) {
             return;
         }
-        list.value.splice(index - 1, 1, item);
+        list.value = list.value.slice(0, index - 1).concat([item].concat(list.value.slice(index)));
     }
 
     getItemOfList (args, util) {
