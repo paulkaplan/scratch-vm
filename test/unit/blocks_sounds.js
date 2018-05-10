@@ -22,6 +22,8 @@ const util = {
 test('playSound with a name string works', t => {
     const args = {SOUND_MENU: 'second name'};
     blocks.playSound(args, util);
+    //
+    console.log('eek ');
     t.strictEqual(playedSound, 'second soundId');
     t.end();
 });
