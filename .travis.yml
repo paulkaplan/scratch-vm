@@ -6,8 +6,7 @@ env:
   global:
   - NODE_ENV=production
   matrix:
-  - NPM_SCRIPT="tap:unit -- --jobs=4"
-  - NPM_SCRIPT="tap:integration -- --jobs=4"
+  - NPM_SCRIPT="test -- --jobs=4"
 cache:
   directories:
   - "$HOME/.npm"
@@ -22,8 +21,6 @@ script: npm run $NPM_SCRIPT
 after_script: greenkeeper-lockfile-upload
 jobs:
     include:
-    - env: NPM_SCRIPT=lint
-      node_js: 8
     - env: NPM_SCRIPT=build
       node_js: 8
       if: not (branch in (master, develop) and type != pull_request)
