@@ -60,6 +60,9 @@ const loadSound = function (sound, runtime, sprite) {
         (sound.asset && Promise.resolve(sound.asset)) ||
         runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext)
     ).then(soundAsset => {
+        // Storage may resolve to null if it cannot retrieve the asset.
+        // Consider this an error and reject to propagate errors up promise chain.
+        if (!soundAsset) return Promise.reject('Could not load sound');
         sound.asset = soundAsset;
         return loadSoundFromAsset(sound, soundAsset, runtime, sprite);
     });

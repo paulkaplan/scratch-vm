@@ -247,7 +247,13 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     const AssetType = runtime.storage.AssetType;
     const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
 
-    const costumePromise = runtime.storage.load(assetType, md5, ext);
+    const costumePromise = runtime.storage.load(assetType, md5, ext)
+        .then(asset => {
+            // Storage may resolve to null if it cannot retrieve the asset.
+            // Consider this an error and reject to propagate errors up promise chain.
+            if (!asset) return Promise.reject('Could not load costume');
+        });
+
     if (!costumePromise) {
         log.error(`Couldn't fetch costume asset: ${md5ext}`);
         return;
@@ -255,7 +261,12 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
 
     let textLayerPromise;
     if (costume.textLayerMD5) {
-        textLayerPromise = runtime.storage.load(AssetType.ImageBitmap, costume.textLayerMD5, 'png');
+        textLayerPromise = runtime.storage.load(AssetType.ImageBitmap, costume.textLayerMD5, 'png')
+            .then(asset => {
+                // Storage may resolve to null if it cannot retrieve the asset.
+                // Consider this an error and reject to propagate errors up promise chain.
+                if (!asset) return Promise.reject('Could not load text layer');
+            });
     } else {
         textLayerPromise = Promise.resolve(null);
     }
@@ -266,10 +277,7 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
             costume.textLayerAsset = assetArray[1];
         }
         return loadCostumeFromAsset(costume, runtime, optVersion);
-    })
-        .catch(e => {
-            log.error(e);
-        });
+    });
 };
 
 module.exports = {
