@@ -982,3 +982,21 @@ test('Starting the VM emits an event', t => {
     t.equal(started, true);
     t.end();
 });
+
+test('addSound/Costume without target rejects', t => {
+    const vm = new VirtualMachine();
+    vm.addSound({}, 'fake target id')
+        .catch(e => {
+            t.equal(e, 'No target found');
+            t.end();
+        });
+});
+
+test('addCostume without target rejects', t => {
+    const vm = new VirtualMachine();
+    vm.addCostume({}, 'fake target id')
+        .catch(e => {
+            t.equal(e, 'No target found');
+            t.end();
+        });
+});
