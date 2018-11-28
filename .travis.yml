@@ -6,8 +6,8 @@ env:
   global:
   - NODE_ENV=production
   matrix:
-  - NPM_SCRIPT="tap:unit -- --jobs=4"
-  - NPM_SCRIPT="tap:integration -- --jobs=4"
+  - NPM_SCRIPT="tap:unit"
+  - NPM_SCRIPT="tap:integration"
 cache:
   directories:
   - "$HOME/.npm"
